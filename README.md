@@ -2,7 +2,7 @@
 
 A from-scratch implementation of an electronic exchange matching engine in C++, built to demonstrate the systems engineering, data structures, and market microstructure knowledge that HFT firms care about.
 
-> **Status:** Stage 1 complete — core order book and matching engine.
+> **Status:** Stage 2 complete — Exchange orchestrator, order modification, multiple symbols.
 
 ---
 
@@ -341,13 +341,16 @@ CPP_Matching_Engine/
 │   └── core/
 │       ├── types.h              ← Order, ExecutionReport, enums
 │       ├── order_book.h         ← PriceLevel, OrderBook
-│       └── matching_engine.h   ← MatchingEngine, FillCallback
+│       ├── matching_engine.h   ← MatchingEngine, FillCallback
+│       └── exchange.h          ← Exchange orchestrator (Stage 2)
 └── src/
 │   └── core/
 │       ├── order_book.cpp       ← add, cancel, depth snapshot
-│       └── matching_engine.cpp ← submit, match, execute_fill
+│       ├── matching_engine.cpp ← submit, match, execute_fill
+│       └── exchange.cpp        ← symbol routing, modify, stats (Stage 2)
 └── tests/
-    └── stage1_test.cpp          ← 6 interactive verification tests
+    ├── stage1_test.cpp          ← 6 Stage 1 verification tests
+    └── stage2_test.cpp          ← 6 Stage 2 verification tests
 ```
 
 ---
@@ -357,8 +360,8 @@ CPP_Matching_Engine/
 | Stage | Status | Description |
 |-------|--------|-------------|
 | **1** | ✅ **Complete** | Order book, matching engine, FIFO matching, cancellation, partial fills |
-| 2 | 🔲 Next | Order modification, multiple symbols, Exchange orchestrator |
-| 3 | 🔲 | Trading agents — random, momentum, mean reversion |
+| **2** | ✅ **Complete** | Order modification, multiple symbols, Exchange orchestrator, global stats |
+| 3 | 🔲 Next | Trading agents — random, momentum, mean reversion |
 | 4 | 🔲 | Market maker — inventory-aware quoting, spread control, PnL |
 | 5 | 🔲 | Risk / inventory engine — pre-trade checks, position limits |
 | 6 | 🔲 | Multithreading — lock-free SPSC queue, thread-per-agent |
@@ -371,13 +374,16 @@ CPP_Matching_Engine/
 ## Key Design Decisions
 
 | Decision | Rationale |
-|----------|-----------|
+|----------|----------|
 | `alignas(64)` on `Order` | One cache line per order — halves memory fetches on the hot path |
 | `std::map` for bid/ask levels | Ordered iteration required for matching sweeps; `unordered_map` breaks this |
 | `std::deque` per price level | O(1) push_back + O(1) pop_front — FIFO without vector's O(N) shifting |
-| Secondary `order_index` | Makes cancel O(log N) instead of O(N) linear scan across all levels |
+| Secondary `order_index` (per book) | Makes cancel O(log N) instead of O(N) linear scan across all levels |
+| Global `order_index` (Exchange) | Routes cancel/modify by order_id alone — callers don't need to know the symbol |
 | Fill at resting price | Universal exchange rule — rewards passive liquidity providers |
 | Callback-based fills | Decouples engine from downstream consumers; stays testable in isolation |
+| Modify = cancel+reinsert (price/qty↑) | Prevents queue-position gaming; mirrors real exchange rules |
+| Modify = in-place (qty↓) | Rewards risk reduction — the one modification without queue penalty |
 | `static_assert(sizeof(Order)==64)` | Compile-time enforcement — layout regression breaks the build, not production |
 
 ---
