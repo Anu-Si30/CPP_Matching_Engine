@@ -2,7 +2,7 @@
 
 A from-scratch implementation of an electronic exchange matching engine in C++, built to demonstrate the systems engineering, data structures, and market microstructure knowledge that HFT firms care about.
 
-> **Status:** Stage 3 complete — trading agents (Random, Momentum, Mean Reversion).
+> **Status:** Stage 4 complete — Market Maker (inventory-aware quoting).
 
 ---
 
@@ -343,6 +343,12 @@ CPP_Matching_Engine/
 │       ├── order_book.h         ← PriceLevel, OrderBook
 │       ├── matching_engine.h   ← MatchingEngine, FillCallback
 │       └── exchange.h          ← Exchange orchestrator (Stage 2)
+│   └── traders/
+│       ├── trading_agent.h      ← Base agent (Stage 3)
+│       ├── random_trader.h      ← Noise trader (Stage 3)
+│       ├── momentum_trader.h    ← MA crossover (Stage 3)
+│       ├── mean_reversion_trader.h ← Z-score fading (Stage 3)
+│       └── market_maker.h       ← Inventory skewing (Stage 4)
 └── src/
 │   └── core/
 │       ├── order_book.cpp       ← add, cancel, depth snapshot
@@ -350,7 +356,9 @@ CPP_Matching_Engine/
 │       └── exchange.cpp        ← symbol routing, modify, stats (Stage 2)
 └── tests/
     ├── stage1_test.cpp          ← 6 Stage 1 verification tests
-    └── stage2_test.cpp          ← 6 Stage 2 verification tests
+    ├── stage2_test.cpp          ← 6 Stage 2 verification tests
+    ├── stage3_test.cpp          ← Stage 3 agents simulation
+    └── stage4_test.cpp          ← Stage 4 Market Maker test
 ```
 
 ---
@@ -362,8 +370,8 @@ CPP_Matching_Engine/
 | **1** | ✅ **Complete** | Order book, matching engine, FIFO matching, cancellation, partial fills |
 | **2** | ✅ **Complete** | Order modification, multiple symbols, Exchange orchestrator, global stats |
 | **3** | ✅ **Complete** | Trading agents — Random, Momentum, Mean Reversion + simulation loop |
-| 4 | 🔲 Next | Market maker — inventory-aware quoting, spread control, PnL |
-| 5 | 🔲 | Risk / inventory engine — pre-trade checks, position limits |
+| **4** | ✅ **Complete** | Market maker — inventory-aware quoting, spread control, PnL |
+| 5 | 🔲 Next | Risk / inventory engine — pre-trade checks, position limits |
 | 6 | 🔲 | Multithreading — lock-free SPSC queue, thread-per-agent |
 | 7 | 🔲 | Benchmarking harness — orders/sec, latency percentiles |
 | 8 | 🔲 | Terminal UI — live order book display, market maker stats |
@@ -384,6 +392,7 @@ CPP_Matching_Engine/
 | Callback-based fills | Decouples engine from downstream consumers; stays testable in isolation |
 | Modify = cancel+reinsert (price/qty↑) | Prevents queue-position gaming; mirrors real exchange rules |
 | Modify = in-place (qty↓) | Rewards risk reduction — the one modification without queue penalty |
+| Market Maker skew | Dynamically adjusts price based on inventory to prevent directional exposure |
 | `static_assert(sizeof(Order)==64)` | Compile-time enforcement — layout regression breaks the build, not production |
 
 ---
