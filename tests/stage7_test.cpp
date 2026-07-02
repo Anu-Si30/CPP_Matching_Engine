@@ -12,18 +12,18 @@
 //   2. Latency percentiles (Time from order creation to fill receipt)
 //
 // Build:
-//   g++ -std=c++14 -O3 -Wall -Iinclude
-//       src/core/order_book.cpp
-//       src/core/matching_engine.cpp
-//       src/core/exchange.cpp
+//   g++ -std=c++14 -O3 -Wall -Isrc
+//       src/orderbook/order_book.cpp
+//       src/matching/matching_engine.cpp
+//       src/exchange/exchange.cpp
 //       tests/stage7_test.cpp
 //       -o build/stage7_test.exe
 // =============================================================================
 
-#include "core/types.h"
-#include "core/order_book.h"
-#include "core/exchange.h"
-#include "core/spsc_queue.h"
+#include "orderbook/types.h"
+#include "orderbook/order_book.h"
+#include "exchange/exchange.h"
+#include "utils/spsc_queue.h"
 
 #include <cstdio>
 #include <cstring>
@@ -66,7 +66,7 @@ DWORD WINAPI exchange_thread_func(LPVOID) {
     ex.add_symbol("AAPL");
 
     // Seed the book with a massive counterparty so we never run out of shares to match against
-    auto seed_sell = std::make_shared<Order>();
+    auto seed_sell = global_order_pool.acquire();
     seed_sell->order_id = 9999999; seed_sell->trader_id = 99; seed_sell->timestamp_ns = now_ns();
     seed_sell->side = Side::SELL; seed_sell->type = OrderType::LIMIT;
     seed_sell->price = 100.10; seed_sell->quantity = NUM_ORDERS; seed_sell->status = OrderStatus::NEW;
@@ -185,7 +185,7 @@ int main() {
     printf("Pre-allocating %lu order objects to avoid heap allocation skew...\n", (unsigned long)NUM_ORDERS);
     preallocated_orders.reserve(NUM_ORDERS);
     for (size_t i = 0; i < NUM_ORDERS; i++) {
-        auto o = std::make_shared<Order>();
+        auto o = global_order_pool.acquire();
         o->order_id = i;
         o->trader_id = 42;
         o->side = Side::BUY;

@@ -7,18 +7,18 @@
 // and then parses it through our `ItchParser` to feed the Exchange.
 //
 // Build:
-//   g++ -std=c++14 -g -Wall -Iinclude
-//       src/core/order_book.cpp
-//       src/core/matching_engine.cpp
-//       src/core/exchange.cpp
+//   g++ -std=c++14 -g -Wall -Isrc
+//       src/orderbook/order_book.cpp
+//       src/matching/matching_engine.cpp
+//       src/exchange/exchange.cpp
 //       tests/stage9_test.cpp
 //       -o build/stage9_test.exe
 // =============================================================================
 
-#include "core/types.h"
-#include "core/order_book.h"
-#include "core/exchange.h"
-#include "core/itch_parser.h"
+#include "orderbook/types.h"
+#include "orderbook/order_book.h"
+#include "exchange/exchange.h"
+#include "replay/itch_parser.h"
 
 #include <cstdio>
 #include <cstring>

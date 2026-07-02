@@ -43,7 +43,7 @@ public:
         std::uniform_int_distribution<int>     qty_dist(1, 100);
         std::uniform_real_distribution<double> prob(0.0, 1.0);
 
-        auto order = std::make_shared<Order>();
+        auto order = global_order_pool.acquire();
         order->order_id     = next_order_id();
         order->trader_id    = trader_id;
         order->timestamp_ns = ts;

@@ -14,18 +14,18 @@
 //   6. PnL leaderboard        — who made money, who lost
 //
 // Build:
-//   g++ -std=c++14 -g -Wall -Iinclude
-//       src/core/order_book.cpp
-//       src/core/matching_engine.cpp
-//       src/core/exchange.cpp
+//   g++ -std=c++14 -g -Wall -Isrc
+//       src/orderbook/order_book.cpp
+//       src/matching/matching_engine.cpp
+//       src/exchange/exchange.cpp
 //       tests/stage3_test.cpp
 //       -o build/stage3_test.exe
 // =============================================================================
 
-#include "core/types.h"
-#include "core/order_book.h"
-#include "core/matching_engine.h"
-#include "core/exchange.h"
+#include "orderbook/types.h"
+#include "orderbook/order_book.h"
+#include "matching/matching_engine.h"
+#include "exchange/exchange.h"
 #include "traders/trading_agent.h"
 #include "traders/random_trader.h"
 #include "traders/momentum_trader.h"
@@ -150,7 +150,7 @@ void test_agent_interface() {
     // Seed the book so the random trader has something to match against
     // (without resting liquidity, market orders just cancel)
     auto seed_sell = [&](double price, uint32_t qty) {
-        auto o = std::make_shared<Order>();
+        auto o = global_order_pool.acquire();
         o->order_id = 9900000 + (uint64_t)(price * 100);
         o->trader_id = 99;
         o->timestamp_ns = now_ns();
@@ -161,7 +161,7 @@ void test_agent_interface() {
         ex.submit_order(o);
     };
     auto seed_buy = [&](double price, uint32_t qty) {
-        auto o = std::make_shared<Order>();
+        auto o = global_order_pool.acquire();
         o->order_id = 8800000 + (uint64_t)(price * 100);
         o->trader_id = 98;
         o->timestamp_ns = now_ns();
@@ -220,14 +220,14 @@ void test_random_trader() {
 
     // Seed initial book
     for (int i = 1; i <= 10; i++) {
-        auto s = std::make_shared<Order>();
+        auto s = global_order_pool.acquire();
         s->order_id = 7700000 + i;  s->trader_id = 99;
         s->timestamp_ns = now_ns(); s->side = Side::SELL;
         s->type = OrderType::LIMIT; s->price = 100.0 + i * 0.05;
         s->quantity = 200; s->filled_qty = 0; s->status = OrderStatus::NEW;
         s->set_symbol("AAPL"); ex.submit_order(s);
 
-        auto b = std::make_shared<Order>();
+        auto b = global_order_pool.acquire();
         b->order_id = 6600000 + i;  b->trader_id = 98;
         b->timestamp_ns = now_ns(); b->side = Side::BUY;
         b->type = OrderType::LIMIT; b->price = 100.0 - i * 0.05;
@@ -283,14 +283,14 @@ void test_momentum_trader() {
 
     // Provide deep liquidity so market orders always fill
     for (int i = 0; i < 20; i++) {
-        auto s = std::make_shared<Order>();
+        auto s = global_order_pool.acquire();
         s->order_id = 5500000 + i; s->trader_id = 99;
         s->timestamp_ns = now_ns(); s->side = Side::SELL;
         s->type = OrderType::LIMIT; s->price = 100.0 + (i+1) * 0.10;
         s->quantity = 1000; s->filled_qty = 0; s->status = OrderStatus::NEW;
         s->set_symbol("AAPL"); ex.submit_order(s);
 
-        auto b = std::make_shared<Order>();
+        auto b = global_order_pool.acquire();
         b->order_id = 4400000 + i; b->trader_id = 98;
         b->timestamp_ns = now_ns(); b->side = Side::BUY;
         b->type = OrderType::LIMIT; b->price = 100.0 - (i+1) * 0.10;
@@ -322,14 +322,14 @@ void test_momentum_trader() {
         rising_price += 0.10;   // Inject price trend: +$0.10 per tick
 
         // Add new ask and bid at the rising price to shift the mid upward
-        auto ask = std::make_shared<Order>();
+        auto ask = global_order_pool.acquire();
         ask->order_id = oid_counter++; ask->trader_id = 97;
         ask->timestamp_ns = now_ns(); ask->side = Side::SELL;
         ask->type = OrderType::LIMIT; ask->price = rising_price + 0.05;
         ask->quantity = 100; ask->filled_qty = 0; ask->status = OrderStatus::NEW;
         ask->set_symbol("AAPL"); ex.submit_order(ask);
 
-        auto bid = std::make_shared<Order>();
+        auto bid = global_order_pool.acquire();
         bid->order_id = oid_counter++; bid->trader_id = 96;
         bid->timestamp_ns = now_ns(); bid->side = Side::BUY;
         bid->type = OrderType::LIMIT; bid->price = rising_price - 0.05;
@@ -378,14 +378,14 @@ void test_mean_reversion_trader() {
     // Deep liquidity
     uint64_t oid_counter = 2200000;
     for (int i = 0; i < 30; i++) {
-        auto s = std::make_shared<Order>();
+        auto s = global_order_pool.acquire();
         s->order_id = oid_counter++; s->trader_id = 99;
         s->timestamp_ns = now_ns(); s->side = Side::SELL;
         s->type = OrderType::LIMIT; s->price = 100.0 + (i+1)*0.05;
         s->quantity = 500; s->filled_qty = 0; s->status = OrderStatus::NEW;
         s->set_symbol("AAPL"); ex.submit_order(s);
 
-        auto b = std::make_shared<Order>();
+        auto b = global_order_pool.acquire();
         b->order_id = oid_counter++; b->trader_id = 98;
         b->timestamp_ns = now_ns(); b->side = Side::BUY;
         b->type = OrderType::LIMIT; b->price = 100.0 - (i+1)*0.05;
@@ -407,14 +407,14 @@ void test_mean_reversion_trader() {
     // Phase 2: inject price spike to $102 (2 std devs above mean of $100)
     printf("Phase 2: Price SPIKE to ~$102 (should trigger SELL signal)\n");
     for (int i = 0; i < 5; i++) {
-        auto ask = std::make_shared<Order>();
+        auto ask = global_order_pool.acquire();
         ask->order_id = oid_counter++; ask->trader_id = 97;
         ask->timestamp_ns = now_ns(); ask->side = Side::SELL;
         ask->type = OrderType::LIMIT; ask->price = 102.10 + i * 0.01;
         ask->quantity = 200; ask->filled_qty = 0; ask->status = OrderStatus::NEW;
         ask->set_symbol("AAPL"); ex.submit_order(ask);
 
-        auto bid = std::make_shared<Order>();
+        auto bid = global_order_pool.acquire();
         bid->order_id = oid_counter++; bid->trader_id = 96;
         bid->timestamp_ns = now_ns(); bid->side = Side::BUY;
         bid->type = OrderType::LIMIT; bid->price = 101.90 - i * 0.01;
@@ -466,14 +466,14 @@ void test_full_simulation() {
     // Seed initial book
     uint64_t oid = 1100000;
     for (int i = 1; i <= 15; i++) {
-        auto s = std::make_shared<Order>();
+        auto s = global_order_pool.acquire();
         s->order_id = oid++; s->trader_id = 99;
         s->timestamp_ns = now_ns(); s->side = Side::SELL;
         s->type = OrderType::LIMIT; s->price = 100.0 + i * 0.05;
         s->quantity = 300; s->filled_qty = 0; s->status = OrderStatus::NEW;
         s->set_symbol("AAPL"); ex.submit_order(s);
 
-        auto b = std::make_shared<Order>();
+        auto b = global_order_pool.acquire();
         b->order_id = oid++; b->trader_id = 98;
         b->timestamp_ns = now_ns(); b->side = Side::BUY;
         b->type = OrderType::LIMIT; b->price = 100.0 - i * 0.05;

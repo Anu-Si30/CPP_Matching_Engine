@@ -3,9 +3,9 @@
 // Compatible with GCC 6.3 (C++14 + constexpr fixes)
 // =============================================================================
 
-#include "core/types.h"
-#include "core/order_book.h"
-#include "core/matching_engine.h"
+#include "orderbook/types.h"
+#include "orderbook/order_book.h"
+#include "matching/matching_engine.h"
 
 #include <iostream>
 #include <iomanip>
@@ -67,7 +67,7 @@ std::shared_ptr<Order> make_limit(
     Side side, double price, uint32_t qty,
     const char* symbol = "AAPL", uint64_t trader = 1)
 {
-    auto o = std::make_shared<Order>();
+    auto o = global_order_pool.acquire();
     o->order_id     = order_counter++;
     o->trader_id    = trader;
     o->timestamp_ns = now_ns();
@@ -85,7 +85,7 @@ std::shared_ptr<Order> make_market(
     Side side, uint32_t qty,
     const char* symbol = "AAPL", uint64_t trader = 1)
 {
-    auto o = std::make_shared<Order>();
+    auto o = global_order_pool.acquire();
     o->order_id     = order_counter++;
     o->trader_id    = trader;
     o->timestamp_ns = now_ns();

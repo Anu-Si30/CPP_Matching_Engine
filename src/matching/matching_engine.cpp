@@ -2,7 +2,7 @@
 // matching_engine.cpp  —  The heart of the exchange
 // =============================================================================
 
-#include "core/matching_engine.h"
+#include "matching/matching_engine.h"
 #include <cstring>
 #include <algorithm>
 
@@ -20,18 +20,30 @@ void MatchingEngine::submit_order(std::shared_ptr<Order> order, OrderBook& book)
     orders_processed++;
     order->status = OrderStatus::NEW;
 
+    if (order->tif == TimeInForce::FOK) {
+        if (!can_fill_completely(order, book)) {
+            order->status = OrderStatus::CANCELLED;
+            return;
+        }
+    }
+
     if (order->type == OrderType::MARKET) {
         match_market_order(order, book);
         // Whatever wasn't filled on a market order is simply discarded
         if (order->remaining() > 0) {
-            order->status = OrderStatus::CANCELLED;  // Unfilled market = cancelled
+            order->status = OrderStatus::CANCELLED;
         }
     } else {
         // LIMIT order
         match_limit_order(order, book);
-        // If anything remains unfilled, post it to the book
+        
+        // Post remainder to book ONLY if it's GTC
         if (order->is_active() && order->remaining() > 0) {
-            book.add_limit_order(order);
+            if (order->tif == TimeInForce::IOC || order->tif == TimeInForce::FOK) {
+                order->status = OrderStatus::CANCELLED;
+            } else {
+                book.add_limit_order(order);
+            }
         }
     }
 }
@@ -140,6 +152,27 @@ void MatchingEngine::match_market_order(std::shared_ptr<Order>& order, OrderBook
     }
 }
 
+// ─── can_fill_completely ──────────────────────────────────────────────────────
+bool MatchingEngine::can_fill_completely(const std::shared_ptr<Order>& order, const OrderBook& book) const {
+    uint32_t needed = order->remaining();
+    if (needed == 0) return true;
+
+    if (order->side == Side::BUY) {
+        for (auto it = book.asks.begin(); it != book.asks.end(); ++it) {
+            if (order->type == OrderType::LIMIT && it->first > order->price) break;
+            needed -= std::min(needed, static_cast<uint32_t>(it->second.total_qty));
+            if (needed == 0) return true;
+        }
+    } else {
+        for (auto it = book.bids.begin(); it != book.bids.end(); ++it) {
+            if (order->type == OrderType::LIMIT && it->first < order->price) break;
+            needed -= std::min(needed, static_cast<uint32_t>(it->second.total_qty));
+            if (needed == 0) return true;
+        }
+    }
+    return needed == 0;
+}
+
 // ─── execute_fill ─────────────────────────────────────────────────────────────
 //
 // The atomic "fill" operation. Given:
@@ -236,6 +269,7 @@ void MatchingEngine::execute_fill(
 
     fills_generated++;
     volume_traded += fill_qty;
+    total_value_traded += (fill_qty * fill_price);
 
     // Notify subscribers (market maker, traders, risk system, etc.)
     on_fill(resting_report);

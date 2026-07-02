@@ -7,20 +7,20 @@
 //   3. Exchange class      (single entry point that routes everything)
 //
 // Build:
-//   g++ -std=c++14 -g -Wall -Iinclude
-//       src/core/order_book.cpp
-//       src/core/matching_engine.cpp
-//       src/core/exchange.cpp
+//   g++ -std=c++14 -g -Wall -Isrc
+//       src/orderbook/order_book.cpp
+//       src/matching/matching_engine.cpp
+//       src/exchange/exchange.cpp
 //       tests/stage2_test.cpp
 //       -o build/stage2_test.exe
 //
 // Run: ./build/stage2_test.exe
 // =============================================================================
 
-#include "core/types.h"
-#include "core/order_book.h"
-#include "core/matching_engine.h"
-#include "core/exchange.h"
+#include "orderbook/types.h"
+#include "orderbook/order_book.h"
+#include "matching/matching_engine.h"
+#include "exchange/exchange.h"
 
 #include <cstdio>
 #include <cstring>
@@ -78,7 +78,7 @@ static uint64_t oid = 1;
 
 std::shared_ptr<Order> make_limit(Side side, double price, uint32_t qty,
                                   const char* sym, uint64_t trader = 1) {
-    auto o          = std::make_shared<Order>();
+    auto o          = global_order_pool.acquire();
     o->order_id     = oid++;
     o->trader_id    = trader;
     o->timestamp_ns = now_ns();
@@ -94,7 +94,7 @@ std::shared_ptr<Order> make_limit(Side side, double price, uint32_t qty,
 
 std::shared_ptr<Order> make_market(Side side, uint32_t qty, const char* sym,
                                    uint64_t trader = 1) {
-    auto o          = std::make_shared<Order>();
+    auto o          = global_order_pool.acquire();
     o->order_id     = oid++;
     o->trader_id    = trader;
     o->timestamp_ns = now_ns();

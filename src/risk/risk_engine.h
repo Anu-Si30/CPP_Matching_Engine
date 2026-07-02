@@ -24,7 +24,7 @@
 //   - on_cancel()   : Removes open exposure when an order is cancelled.
 // =============================================================================
 
-#include "core/types.h"
+#include "orderbook/types.h"
 #include <unordered_map>
 #include <string>
 #include <cstring>

@@ -2,7 +2,7 @@
 // exchange.cpp  —  Exchange orchestrator implementation
 // =============================================================================
 
-#include "core/exchange.h"
+#include "exchange/exchange.h"
 #include <cstdio>
 #include <cstring>
 #include <algorithm>

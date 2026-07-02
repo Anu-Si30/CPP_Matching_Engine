@@ -28,7 +28,7 @@
 // =============================================================================
 
 #include "traders/trading_agent.h"
-#include "core/exchange.h"
+#include "exchange/exchange.h"
 #include <cmath>
 
 class MarketMaker : public TradingAgent {
@@ -52,6 +52,8 @@ public:
     on_tick(const OrderBook& book, uint64_t ts) override {
         double mid = book.mid_price();
         if (mid <= 0.0) return {}; // Wait until there is a valid mid price
+        
+        record_pnl_sample(mid);
 
         // 1. Cancel previous quotes to reposition them
         if (active_bid_id_ != 0) {
@@ -86,7 +88,7 @@ public:
 
         // 3. Post new BID if not at max long position
         if (inventory() < cfg_.max_position) {
-            auto bid = std::make_shared<Order>();
+            auto bid = global_order_pool.acquire();
             bid->order_id     = next_order_id();
             bid->trader_id    = trader_id;
             bid->timestamp_ns = ts;
@@ -103,7 +105,7 @@ public:
 
         // 4. Post new ASK if not at max short position
         if (inventory() > -cfg_.max_position) {
-            auto ask = std::make_shared<Order>();
+            auto ask = global_order_pool.acquire();
             ask->order_id     = next_order_id();
             ask->trader_id    = trader_id;
             ask->timestamp_ns = ts;

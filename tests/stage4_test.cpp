@@ -2,18 +2,18 @@
 // stage4_test.cpp  —  Interactive walkthrough of Stage 4: Market Maker
 //
 // Build:
-//   g++ -std=c++14 -g -Wall -Iinclude
-//       src/core/order_book.cpp
-//       src/core/matching_engine.cpp
-//       src/core/exchange.cpp
+//   g++ -std=c++14 -g -Wall -Isrc
+//       src/orderbook/order_book.cpp
+//       src/matching/matching_engine.cpp
+//       src/exchange/exchange.cpp
 //       tests/stage4_test.cpp
 //       -o build/stage4_test.exe
 // =============================================================================
 
-#include "core/types.h"
-#include "core/order_book.h"
-#include "core/matching_engine.h"
-#include "core/exchange.h"
+#include "orderbook/types.h"
+#include "orderbook/order_book.h"
+#include "matching/matching_engine.h"
+#include "exchange/exchange.h"
 #include "traders/random_trader.h"
 #include "traders/market_maker.h"
 
@@ -84,13 +84,13 @@ void test_mm_quoting() {
     mm.set_symbol("AAPL");
 
     // Seed book so there is a mid price of 100.00
-    auto seed_sell = std::make_shared<Order>();
+    auto seed_sell = global_order_pool.acquire();
     seed_sell->order_id = 99; seed_sell->trader_id = 99; seed_sell->timestamp_ns = 1;
     seed_sell->side = Side::SELL; seed_sell->type = OrderType::LIMIT;
     seed_sell->price = 100.05; seed_sell->quantity = 1; seed_sell->status = OrderStatus::NEW;
     seed_sell->set_symbol("AAPL"); ex.submit_order(seed_sell);
 
-    auto seed_buy = std::make_shared<Order>();
+    auto seed_buy = global_order_pool.acquire();
     seed_buy->order_id = 98; seed_buy->trader_id = 98; seed_buy->timestamp_ns = 1;
     seed_buy->side = Side::BUY; seed_buy->type = OrderType::LIMIT;
     seed_buy->price = 99.95; seed_buy->quantity = 1; seed_buy->status = OrderStatus::NEW;
@@ -154,13 +154,13 @@ void test_mm_simulation() {
     agents[1] = &mm_actual;
 
     // Seed book at 100.00
-    auto seed_sell = std::make_shared<Order>();
+    auto seed_sell = global_order_pool.acquire();
     seed_sell->order_id = 99; seed_sell->trader_id = 99; seed_sell->timestamp_ns = 1;
     seed_sell->side = Side::SELL; seed_sell->type = OrderType::LIMIT;
     seed_sell->price = 100.10; seed_sell->quantity = 1000; seed_sell->status = OrderStatus::NEW;
     seed_sell->set_symbol("AAPL"); ex.submit_order(seed_sell);
 
-    auto seed_buy = std::make_shared<Order>();
+    auto seed_buy = global_order_pool.acquire();
     seed_buy->order_id = 98; seed_buy->trader_id = 98; seed_buy->timestamp_ns = 1;
     seed_buy->side = Side::BUY; seed_buy->type = OrderType::LIMIT;
     seed_buy->price = 99.90; seed_buy->quantity = 1000; seed_buy->status = OrderStatus::NEW;

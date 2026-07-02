@@ -76,7 +76,7 @@ public:
         if (signal_side == last_signal_) return {};  // Already positioned this way
         last_signal_ = signal_side;
 
-        auto order = std::make_shared<Order>();
+        auto order = global_order_pool.acquire();
         order->order_id     = next_order_id();
         order->trader_id    = trader_id;
         order->timestamp_ns = ts;

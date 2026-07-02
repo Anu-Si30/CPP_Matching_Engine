@@ -13,7 +13,7 @@
 // into our internal `Order` struct.
 // =============================================================================
 
-#include "core/types.h"
+#include "orderbook/types.h"
 #include <cstdint>
 #include <vector>
 #include <memory>
@@ -87,7 +87,7 @@ public:
                 
                 ItchAddOrder* msg = reinterpret_cast<ItchAddOrder*>(payload.data());
                 
-                auto o = std::make_shared<Order>();
+                auto o = global_order_pool.acquire();
                 // Byte swap network data to host native
                 o->order_id     = bswap64(msg->order_ref_num);
                 o->trader_id    = 0; // ITCH public feeds mask the actual trader IDs

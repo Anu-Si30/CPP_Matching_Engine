@@ -1,8 +1,8 @@
-# C++ High-Performance Matching Engine
+# MERCURY: High-Performance Electronic Exchange
 
 A from-scratch implementation of an electronic exchange matching engine in C++, built to demonstrate the systems engineering, data structures, and market microstructure knowledge that HFT firms care about.
 
-> **Status:** Stage 9 complete — Project Finished! All stages implemented successfully.
+> **Status:** Transitioning to MERCURY Architecture (Phase 1).
 
 ---
 
@@ -333,40 +333,30 @@ PASS
 
 ### Project File Structure (Stage 1)
 
-```
-CPP_Matching_Engine/
-├── CMakeLists.txt
-├── README.md
-├── include/
-│   └── core/
-│       ├── types.h              ← Order, ExecutionReport, enums
-│       ├── order_book.h         ← PriceLevel, OrderBook
-│       ├── matching_engine.h   ← MatchingEngine, FillCallback
-│       ├── exchange.h          ← Exchange orchestrator (Stage 2)
-│       ├── risk_engine.h       ← Pre-trade limits & exposure (Stage 5)
-│       ├── spsc_queue.h        ← Lock-free ring buffer (Stage 6)
-│       └── itch_parser.h       ← NASDAQ ITCH 5.0 binary parser (Stage 9)
-│   └── traders/
-│       ├── trading_agent.h      ← Base agent (Stage 3)
-│       ├── random_trader.h      ← Noise trader (Stage 3)
-│       ├── momentum_trader.h    ← MA crossover (Stage 3)
-│       ├── mean_reversion_trader.h ← Z-score fading (Stage 3)
-│       └── market_maker.h       ← Inventory skewing (Stage 4)
-└── src/
-│   └── core/
-│       ├── order_book.cpp       ← add, cancel, depth snapshot
-│       ├── matching_engine.cpp ← submit, match, execute_fill
-│       └── exchange.cpp        ← symbol routing, modify, stats (Stage 2)
+```text
+mercury-exchange/
+├── src/
+│   ├── exchange/           ← Exchange orchestrator
+│   ├── matching/           ← MatchingEngine, FillCallback
+│   ├── orderbook/          ← OrderBook, PriceLevel, types
+│   ├── traders/            ← MarketMaker, RandomTrader, agents
+│   ├── risk/               ← Pre-trade limits & exposure
+│   ├── networking/         ← TCP Server (WIP)
+│   ├── replay/             ← NASDAQ ITCH 5.0 binary parser
+│   ├── analytics/          ← Metrics (WIP)
+│   ├── dashboard/          ← Terminal UI
+│   └── utils/              ← Lock-free SPSC queue
 └── tests/
-    ├── stage1_test.cpp          ← 6 Stage 1 verification tests
-    ├── stage2_test.cpp          ← 6 Stage 2 verification tests
-    ├── stage3_test.cpp          ← Stage 3 agents simulation
-    ├── stage4_test.cpp          ← Stage 4 Market Maker test
-    ├── stage5_test.cpp          ← Stage 5 Risk Engine test
-    ├── stage6_test.cpp          ← Stage 6 Multithreading test
-    ├── stage7_test.cpp          ← Stage 7 Benchmarking harness
-    ├── stage8_test.cpp          ← Stage 8 Live Terminal UI
-    └── stage9_test.cpp          ← Stage 9 ITCH Historical Replay
+    ├── manual_test.cpp     ← Interactive CLI
+    ├── stage1_test.cpp     ← 6 Stage 1 verification tests
+    ├── stage2_test.cpp     ← 6 Stage 2 verification tests
+    ├── stage3_test.cpp     ← Stage 3 agents simulation
+    ├── stage4_test.cpp     ← Stage 4 Market Maker test
+    ├── stage5_test.cpp     ← Stage 5 Risk Engine test
+    ├── stage6_test.cpp     ← Stage 6 Multithreading test
+    ├── stage7_test.cpp     ← Stage 7 Benchmarking harness
+    ├── stage8_test.cpp     ← Stage 8 Live Terminal UI
+    └── stage9_test.cpp     ← Stage 9 ITCH Historical Replay
 ```
 
 ---

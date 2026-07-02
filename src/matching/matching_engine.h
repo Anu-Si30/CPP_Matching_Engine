@@ -16,7 +16,7 @@
 //   4. Limit orders match until no more crossing, then REST in the book
 // =============================================================================
 
-#include "order_book.h"
+#include "orderbook/order_book.h"
 #include <functional>
 
 class MatchingEngine {
@@ -40,6 +40,9 @@ public:
     uint64_t total_orders_processed() const { return orders_processed; }
     uint64_t total_fills_generated()  const { return fills_generated; }
     uint64_t total_volume_traded()    const { return volume_traded; }
+    double   get_vwap() const {
+        return volume_traded > 0 ? (total_value_traded / volume_traded) : 0.0;
+    }
 
 private:
     FillCallback on_fill;           // Invoked for every fill
@@ -47,6 +50,7 @@ private:
     uint64_t     orders_processed = 0;
     uint64_t     fills_generated  = 0;
     uint64_t     volume_traded    = 0;
+    double       total_value_traded = 0.0;
 
     // ── Core matching loops ───────────────────────────────────────────────────
 
@@ -64,4 +68,7 @@ private:
         double fill_price,
         OrderBook& book
     );
+
+    // Checks if a FOK order can be fully executed at the current book state
+    bool can_fill_completely(const std::shared_ptr<Order>& order, const OrderBook& book) const;
 };

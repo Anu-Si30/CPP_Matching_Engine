@@ -19,12 +19,13 @@
 //   independently testable and keeps concerns separated.
 // =============================================================================
 
-#include "core/types.h"
-#include "core/order_book.h"
+#include "orderbook/types.h"
+#include "orderbook/order_book.h"
 #include <vector>
 #include <memory>
 #include <string>
 #include <cstdint>
+#include <cmath>
 
 class TradingAgent {
 public:
@@ -66,6 +67,37 @@ public:
         return realized_pnl_ + unrealized_pnl(current_mid);
     }
 
+    double max_drawdown() const { return max_drawdown_; }
+    double sharpe_ratio() const {
+        if (pnl_returns_.size() < 2) return 0.0;
+        double sum = 0.0, sq_sum = 0.0;
+        for (double r : pnl_returns_) {
+            sum += r;
+            sq_sum += r * r;
+        }
+        double mean = sum / pnl_returns_.size();
+        double variance = (sq_sum / pnl_returns_.size()) - (mean * mean);
+        if (variance <= 0.0) return 0.0;
+        // Annualize it assuming high-frequency (just a simple scaler for simulation)
+        return (mean / std::sqrt(variance)); 
+    }
+    double avg_spread_captured() const {
+        if (closing_trades_ == 0) return 0.0;
+        return realized_pnl_ / closing_trades_;
+    }
+
+    // Called every tick to sample PnL for Sharpe
+    void record_pnl_sample(double current_mid) {
+        double current_pnl = total_pnl(current_mid);
+        double step_return = current_pnl - last_pnl_sample_;
+        pnl_returns_.push_back(step_return);
+        last_pnl_sample_ = current_pnl;
+
+        if (current_pnl > peak_pnl_) peak_pnl_ = current_pnl;
+        double drawdown = peak_pnl_ - current_pnl;
+        if (drawdown > max_drawdown_) max_drawdown_ = drawdown;
+    }
+
 protected:
     // ── Shared PnL accounting ─────────────────────────────────────────────────
     // Derived classes call this from on_fill() to keep accounting consistent.
@@ -83,6 +115,7 @@ protected:
             if (inventory_ > 0) {
                 int64_t closing = std::min(static_cast<int64_t>(r.exec_qty), inventory_);
                 realized_pnl_  += closing * (r.exec_price - avg_cost_);
+                closing_trades_ += closing;
             }
             inventory_ -= static_cast<int64_t>(r.exec_qty);
         }
@@ -103,4 +136,11 @@ private:
     uint64_t fill_count_   = 0;
     uint64_t order_count_  = 0;
     uint64_t id_counter_   = 0;
+
+    // Analytics
+    double   peak_pnl_        = 0.0;
+    double   max_drawdown_    = 0.0;
+    double   last_pnl_sample_ = 0.0;
+    uint64_t closing_trades_  = 0;
+    std::vector<double> pnl_returns_;
 };

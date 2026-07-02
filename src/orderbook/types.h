@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <cstring>
 #include <chrono>
+#include "utils/object_pool.h"
 
 // ─── Helper: current wall-clock time in nanoseconds ──────────────────────────
 inline uint64_t now_ns() {
@@ -43,6 +44,12 @@ enum class OrderStatus : uint8_t {
     REJECTED         = 4   // Rejected by the exchange (e.g., invalid price)
 };
 
+enum class TimeInForce : uint8_t {
+    GTC = 0, // Good Till Cancelled (rest in book)
+    IOC = 1, // Immediate Or Cancel (take liquidity now, cancel remainder)
+    FOK = 2  // Fill Or Kill (take all liquidity now, or cancel entirely)
+};
+
 // ─── Order ────────────────────────────────────────────────────────────────────
 //
 // alignas(64): forces this struct to start at a 64-byte boundary.
@@ -67,8 +74,9 @@ struct alignas(64) Order {
     Side        side;            // BUY or SELL
     OrderType   type;            // LIMIT or MARKET
     OrderStatus status;          // Current lifecycle state
+    TimeInForce tif = TimeInForce::GTC;  // Time In Force constraint
 
-    uint8_t     _pad[5];         // Explicit padding to reach exactly 64 bytes
+    uint8_t     _pad[4];         // Explicit padding to reach exactly 64 bytes
 
     // ── Convenience methods ──────────────────────────────────────────────────
 
@@ -89,6 +97,9 @@ struct alignas(64) Order {
         std::strncpy(symbol, sym, 7);
     }
 };
+
+// Global memory pool for orders to avoid heap allocations on the hot path
+extern ObjectPool<Order> global_order_pool;
 
 // Verify at compile time that Order is exactly 64 bytes.
 // If this fails, something is misaligned — fix the padding.

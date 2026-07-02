@@ -14,18 +14,18 @@
 //   3. Fills       (Exchange -> Agent) : Sends ExecutionReports
 //
 // Build:
-//   g++ -std=c++14 -g -Wall -pthread -Iinclude
-//       src/core/order_book.cpp
-//       src/core/matching_engine.cpp
-//       src/core/exchange.cpp
+//   g++ -std=c++14 -g -Wall -pthread -Isrc
+//       src/orderbook/order_book.cpp
+//       src/matching/matching_engine.cpp
+//       src/exchange/exchange.cpp
 //       tests/stage6_test.cpp
 //       -o build/stage6_test.exe
 // =============================================================================
 
-#include "core/types.h"
-#include "core/order_book.h"
-#include "core/exchange.h"
-#include "core/spsc_queue.h"
+#include "orderbook/types.h"
+#include "orderbook/order_book.h"
+#include "exchange/exchange.h"
+#include "utils/spsc_queue.h"
 
 #include <cstdio>
 #include <cstring>
@@ -66,13 +66,13 @@ void exchange_thread_func() {
     ex.add_symbol("AAPL");
 
     // Seed the book with a counterparty so the agent has someone to trade against
-    auto seed_sell = std::make_shared<Order>();
+    auto seed_sell = global_order_pool.acquire();
     seed_sell->order_id = 99; seed_sell->trader_id = 99; seed_sell->timestamp_ns = now_ns();
     seed_sell->side = Side::SELL; seed_sell->type = OrderType::LIMIT;
     seed_sell->price = 100.10; seed_sell->quantity = 100000; seed_sell->status = OrderStatus::NEW;
     seed_sell->set_symbol("AAPL"); ex.submit_order(seed_sell);
 
-    auto seed_buy = std::make_shared<Order>();
+    auto seed_buy = global_order_pool.acquire();
     seed_buy->order_id = 98; seed_buy->trader_id = 98; seed_buy->timestamp_ns = now_ns();
     seed_buy->side = Side::BUY; seed_buy->type = OrderType::LIMIT;
     seed_buy->price = 99.90; seed_buy->quantity = 100000; seed_buy->status = OrderStatus::NEW;
@@ -145,7 +145,7 @@ void agent_thread_func() {
 
         // 3. Trading Logic: If we have valid market data and haven't hit our limit, send an order
         if (current_bid > 0.0 && current_ask > 0.0 && orders_sent < 50000) {
-            auto order = std::make_shared<Order>();
+            auto order = global_order_pool.acquire();
             order->order_id = ++next_order_id;
             order->trader_id = 42;
             order->timestamp_ns = now_ns();

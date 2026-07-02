@@ -90,7 +90,7 @@ public:
                 std::min(static_cast<int64_t>(cfg_.trade_qty),
                          std::abs(inventory())));
             if (exit_qty > 0) {
-                auto o = std::make_shared<Order>();
+                auto o = global_order_pool.acquire();
                 o->order_id     = next_order_id();
                 o->trader_id    = trader_id;
                 o->timestamp_ns = ts;
@@ -135,7 +135,7 @@ private:
     }
 
     std::shared_ptr<Order> make_order(Side side, uint64_t ts, double price) {
-        auto o = std::make_shared<Order>();
+        auto o = global_order_pool.acquire();
         o->order_id     = next_order_id();
         o->trader_id    = trader_id;
         o->timestamp_ns = ts;

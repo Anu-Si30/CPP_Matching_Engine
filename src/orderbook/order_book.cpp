@@ -2,8 +2,10 @@
 // order_book.cpp  —  Implementation of the OrderBook methods
 // =============================================================================
 
-#include "core/order_book.h"
+#include "orderbook/order_book.h"
 #include <stdexcept>
+
+ObjectPool<Order> global_order_pool;
 
 // ─── add_limit_order ──────────────────────────────────────────────────────────
 //
