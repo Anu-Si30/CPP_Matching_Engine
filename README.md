@@ -2,7 +2,7 @@
 
 A from-scratch implementation of an electronic exchange matching engine in C++, built to demonstrate the systems engineering, data structures, and market microstructure knowledge that HFT firms care about.
 
-> **Status:** Stage 2 complete — Exchange orchestrator, order modification, multiple symbols.
+> **Status:** Stage 3 complete — trading agents (Random, Momentum, Mean Reversion).
 
 ---
 
@@ -361,8 +361,8 @@ CPP_Matching_Engine/
 |-------|--------|-------------|
 | **1** | ✅ **Complete** | Order book, matching engine, FIFO matching, cancellation, partial fills |
 | **2** | ✅ **Complete** | Order modification, multiple symbols, Exchange orchestrator, global stats |
-| 3 | 🔲 Next | Trading agents — random, momentum, mean reversion |
-| 4 | 🔲 | Market maker — inventory-aware quoting, spread control, PnL |
+| **3** | ✅ **Complete** | Trading agents — Random, Momentum, Mean Reversion + simulation loop |
+| 4 | 🔲 Next | Market maker — inventory-aware quoting, spread control, PnL |
 | 5 | 🔲 | Risk / inventory engine — pre-trade checks, position limits |
 | 6 | 🔲 | Multithreading — lock-free SPSC queue, thread-per-agent |
 | 7 | 🔲 | Benchmarking harness — orders/sec, latency percentiles |
