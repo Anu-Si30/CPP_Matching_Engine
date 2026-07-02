@@ -2,7 +2,7 @@
 
 A from-scratch implementation of an electronic exchange matching engine in C++, built to demonstrate the systems engineering, data structures, and market microstructure knowledge that HFT firms care about.
 
-> **Status:** Stage 5 complete — Risk Engine (Pre-Trade Limits & Open Exposure).
+> **Status:** Stage 6 complete — Multithreading (Lock-Free SPSC Queues).
 
 ---
 
@@ -343,7 +343,8 @@ CPP_Matching_Engine/
 │       ├── order_book.h         ← PriceLevel, OrderBook
 │       ├── matching_engine.h   ← MatchingEngine, FillCallback
 │       ├── exchange.h          ← Exchange orchestrator (Stage 2)
-│       └── risk_engine.h       ← Pre-trade limits & exposure (Stage 5)
+│       ├── risk_engine.h       ← Pre-trade limits & exposure (Stage 5)
+│       └── spsc_queue.h        ← Lock-free ring buffer (Stage 6)
 │   └── traders/
 │       ├── trading_agent.h      ← Base agent (Stage 3)
 │       ├── random_trader.h      ← Noise trader (Stage 3)
@@ -360,7 +361,8 @@ CPP_Matching_Engine/
     ├── stage2_test.cpp          ← 6 Stage 2 verification tests
     ├── stage3_test.cpp          ← Stage 3 agents simulation
     ├── stage4_test.cpp          ← Stage 4 Market Maker test
-    └── stage5_test.cpp          ← Stage 5 Risk Engine test
+    ├── stage5_test.cpp          ← Stage 5 Risk Engine test
+    └── stage6_test.cpp          ← Stage 6 Multithreading test
 ```
 
 ---
@@ -374,8 +376,8 @@ CPP_Matching_Engine/
 | **3** | ✅ **Complete** | Trading agents — Random, Momentum, Mean Reversion + simulation loop |
 | **4** | ✅ **Complete** | Market maker — inventory-aware quoting, spread control, PnL |
 | **5** | ✅ **Complete** | Risk / inventory engine — pre-trade checks, position limits |
-| 6 | 🔲 Next | Multithreading — lock-free SPSC queue, thread-per-agent |
-| 7 | 🔲 | Benchmarking harness — orders/sec, latency percentiles |
+| **6** | ✅ **Complete** | Multithreading — lock-free SPSC queue, thread-per-agent |
+| 7 | 🔲 Next | Benchmarking harness — orders/sec, latency percentiles |
 | 8 | 🔲 | Terminal UI — live order book display, market maker stats |
 | 9 | 🔲 | Historical replay — NASDAQ ITCH 5.0 binary protocol parser |
 
@@ -396,6 +398,7 @@ CPP_Matching_Engine/
 | Modify = in-place (qty↓) | Rewards risk reduction — the one modification without queue penalty |
 | Market Maker skew | Dynamically adjusts price based on inventory to prevent directional exposure |
 | Risk Engine `open_buy_qty` | Open exposure prevents limit-breach from multiple resting orders filling simultaneously |
+| SPSC Lock-Free Queues | Eliminates mutex contention; enables sub-microsecond inter-thread communication |
 | `static_assert(sizeof(Order)==64)` | Compile-time enforcement — layout regression breaks the build, not production |
 
 ---
