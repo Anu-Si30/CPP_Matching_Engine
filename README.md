@@ -2,7 +2,7 @@
 
 A from-scratch implementation of an electronic exchange matching engine in C++, built to demonstrate the systems engineering, data structures, and market microstructure knowledge that HFT firms care about.
 
-> **Status:** Stage 8 complete — Terminal UI Dashboard.
+> **Status:** Stage 9 complete — Project Finished! All stages implemented successfully.
 
 ---
 
@@ -344,7 +344,8 @@ CPP_Matching_Engine/
 │       ├── matching_engine.h   ← MatchingEngine, FillCallback
 │       ├── exchange.h          ← Exchange orchestrator (Stage 2)
 │       ├── risk_engine.h       ← Pre-trade limits & exposure (Stage 5)
-│       └── spsc_queue.h        ← Lock-free ring buffer (Stage 6)
+│       ├── spsc_queue.h        ← Lock-free ring buffer (Stage 6)
+│       └── itch_parser.h       ← NASDAQ ITCH 5.0 binary parser (Stage 9)
 │   └── traders/
 │       ├── trading_agent.h      ← Base agent (Stage 3)
 │       ├── random_trader.h      ← Noise trader (Stage 3)
@@ -364,7 +365,8 @@ CPP_Matching_Engine/
     ├── stage5_test.cpp          ← Stage 5 Risk Engine test
     ├── stage6_test.cpp          ← Stage 6 Multithreading test
     ├── stage7_test.cpp          ← Stage 7 Benchmarking harness
-    └── stage8_test.cpp          ← Stage 8 Live Terminal UI
+    ├── stage8_test.cpp          ← Stage 8 Live Terminal UI
+    └── stage9_test.cpp          ← Stage 9 ITCH Historical Replay
 ```
 
 ---
@@ -381,7 +383,7 @@ CPP_Matching_Engine/
 | **6** | ✅ **Complete** | Multithreading — lock-free SPSC queue, thread-per-agent |
 | **7** | ✅ **Complete** | Benchmarking harness — orders/sec, latency percentiles |
 | **8** | ✅ **Complete** | Terminal UI — live order book display, market maker stats |
-| 9 | 🔲 Next | Historical replay — NASDAQ ITCH 5.0 binary protocol parser |
+| **9** | ✅ **Complete** | Historical replay — NASDAQ ITCH 5.0 binary protocol parser |
 
 ---
 
@@ -402,6 +404,8 @@ CPP_Matching_Engine/
 | Risk Engine `open_buy_qty` | Open exposure prevents limit-breach from multiple resting orders filling simultaneously |
 | SPSC Lock-Free Queues | Eliminates mutex contention; enables sub-microsecond inter-thread communication |
 | ANSI Escape Sequences | `\033[2J\033[H` for ultra-fast screen redrawing without ncurses |
+| Byte-Swapping `bswap64` | Fast bitwise shifting to convert Network Big-Endian to Host Little-Endian |
+| `#pragma pack(push, 1)` | Maps raw network bytes directly into C++ structs for zero-copy parsing |
 | `static_assert(sizeof(Order)==64)` | Compile-time enforcement — layout regression breaks the build, not production |
 
 ---
