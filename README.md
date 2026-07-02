@@ -2,7 +2,7 @@
 
 A from-scratch implementation of an electronic exchange matching engine in C++, built to demonstrate the systems engineering, data structures, and market microstructure knowledge that HFT firms care about.
 
-> **Status:** Stage 7 complete — Benchmarking Harness (Throughput & Latency).
+> **Status:** Stage 8 complete — Terminal UI Dashboard.
 
 ---
 
@@ -363,7 +363,8 @@ CPP_Matching_Engine/
     ├── stage4_test.cpp          ← Stage 4 Market Maker test
     ├── stage5_test.cpp          ← Stage 5 Risk Engine test
     ├── stage6_test.cpp          ← Stage 6 Multithreading test
-    └── stage7_test.cpp          ← Stage 7 Benchmarking harness
+    ├── stage7_test.cpp          ← Stage 7 Benchmarking harness
+    └── stage8_test.cpp          ← Stage 8 Live Terminal UI
 ```
 
 ---
@@ -379,8 +380,8 @@ CPP_Matching_Engine/
 | **5** | ✅ **Complete** | Risk / inventory engine — pre-trade checks, position limits |
 | **6** | ✅ **Complete** | Multithreading — lock-free SPSC queue, thread-per-agent |
 | **7** | ✅ **Complete** | Benchmarking harness — orders/sec, latency percentiles |
-| 8 | 🔲 Next | Terminal UI — live order book display, market maker stats |
-| 9 | 🔲 | Historical replay — NASDAQ ITCH 5.0 binary protocol parser |
+| **8** | ✅ **Complete** | Terminal UI — live order book display, market maker stats |
+| 9 | 🔲 Next | Historical replay — NASDAQ ITCH 5.0 binary protocol parser |
 
 ---
 
@@ -400,6 +401,7 @@ CPP_Matching_Engine/
 | Market Maker skew | Dynamically adjusts price based on inventory to prevent directional exposure |
 | Risk Engine `open_buy_qty` | Open exposure prevents limit-breach from multiple resting orders filling simultaneously |
 | SPSC Lock-Free Queues | Eliminates mutex contention; enables sub-microsecond inter-thread communication |
+| ANSI Escape Sequences | `\033[2J\033[H` for ultra-fast screen redrawing without ncurses |
 | `static_assert(sizeof(Order)==64)` | Compile-time enforcement — layout regression breaks the build, not production |
 
 ---
